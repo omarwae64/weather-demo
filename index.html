@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #6baed6, #d1e9f4);
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .weather {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather App</h1>
+        <div class="weather" id="weather"></div>
+    </div>
+
+    <script>
+        async function getCurrentLocationWeather() {
+            const weatherDiv = document.getElementById('weather');
+
+            if (!navigator.geolocation) {
+                weatherDiv.innerHTML = '<p>Geolocation is not supported by your browser.</p>';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const { latitude, longitude } = position.coords;
+                const apiKey = '23de3aaaea468743d5e02855336a5400';
+                const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;
+
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('Unable to fetch weather data.');
+                    }
+
+                    const data = await response.json();
+
+                    const weatherHtml = data.list.slice(0, 3).map((forecast) => {
+                        const date = new Date(forecast.dt * 1000);
+                        return `
+                            <div>
+                                <h3>${date.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
+                                <p><strong>Time:</strong> ${date.toLocaleTimeString('en-US')}</p>
+                                <p><strong>Temperature:</strong> ${forecast.main.temp}°C</p>
+                                <p><strong>Weather:</strong> ${forecast.weather[0].description}</p>
+                                <p><strong>Humidity:</strong> ${forecast.main.humidity}%</p>
+                                <p><strong>Wind Speed:</strong> ${forecast.wind.speed} m/s</p>
+                            </div>
+                        `;
+                    }).join('<hr>');
+
+                    weatherDiv.innerHTML = `
+                        <h2>3-Day Forecast</h2>
+                        ${weatherHtml}
+                    `;
+                } catch (error) {
+                    weatherDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+                }
+            }, () => {
+                weatherDiv.innerHTML = '<p>Unable to retrieve your location.</p>';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', getCurrentLocationWeather);
+    </script>
+</body>
+</html>
